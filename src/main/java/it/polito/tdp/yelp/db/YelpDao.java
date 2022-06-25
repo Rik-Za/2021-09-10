@@ -5,8 +5,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.javadocmd.simplelatlng.LatLng;
+
 import it.polito.tdp.yelp.model.Business;
+import it.polito.tdp.yelp.model.Centro;
 import it.polito.tdp.yelp.model.Review;
 import it.polito.tdp.yelp.model.User;
 
@@ -99,6 +105,73 @@ public class YelpDao {
 						res.getInt("review_count"));
 				
 				result.add(user);
+			}
+			res.close();
+			st.close();
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public Map<String, Business> getVertici(String citta){
+		String sql = "SELECT * "
+				+ "FROM business "
+				+ "WHERE city=? ";
+		Map<String,Business> result = new HashMap<>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, citta);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				Business business = new Business(res.getString("business_id"), 
+						res.getString("full_address"),
+						res.getString("active"),
+						res.getString("categories"),
+						res.getString("city"),
+						res.getInt("review_count"),
+						res.getString("business_name"),
+						res.getString("neighborhoods"),
+						res.getDouble("latitude"),
+						res.getDouble("longitude"),
+						res.getString("state"),
+						res.getDouble("stars"));
+				result.put(business.getBusinessId(), business);
+			}
+			res.close();
+			st.close();
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public List<Centro> getArchi(String citta, Map<String,Business> vertici){
+		String sql = "SELECT business_id AS id, latitude AS lat, longitude AS lon "
+				+ "FROM business "
+				+ "WHERE city=? ";
+		List<Centro> result = new ArrayList<>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, citta);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				Business business = vertici.get(res.getString("id"));
+				LatLng locazione = new LatLng(res.getDouble("lat"), res.getDouble("lon"));
+				Centro c = new Centro(business, locazione);
+				result.add(c);
 			}
 			res.close();
 			st.close();

@@ -5,7 +5,11 @@
 package it.polito.tdp.yelp;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.yelp.model.Adiacenza;
+import it.polito.tdp.yelp.model.Business;
 import it.polito.tdp.yelp.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,30 +41,68 @@ public class FXMLController {
     private TextField txtX2; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbCitta"
-    private ComboBox<?> cmbCitta; // Value injected by FXMLLoader
+    private ComboBox<String> cmbCitta; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbB1"
-    private ComboBox<?> cmbB1; // Value injected by FXMLLoader
+    private ComboBox<Business> cmbB1; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbB2"
-    private ComboBox<?> cmbB2; // Value injected by FXMLLoader
+    private ComboBox<Business> cmbB2; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
     
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	txtResult.clear();
+    	String citta= cmbCitta.getValue();
+    	if(citta==null) {
+    		txtResult.setText("Selezionare una citta!");
+    		return;
+    	}
+    	String ris= this.model.creaGrafo(citta);
+    	txtResult.setText(ris);
+    	cmbB1.getItems().clear();
+    	cmbB1.getItems().addAll(this.model.getVertici());
+    	cmbB2.getItems().clear();
+    	cmbB2.getItems().addAll(this.model.getVertici());
     	
     }
 
     @FXML
     void doCalcolaLocaleDistante(ActionEvent event) {
+    	Business b = cmbB1.getValue();
+    	if(b==null) {
+    		txtResult.setText("Selezionare un locale!");
+    		return;
+    	}
+    	Adiacenza ris = this.model.getVicinoDistante(b);
+    	txtResult.appendText("\nLocale più distante da "+b.toString()+":\n"+ris.toString());
 
     	
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
+    	txtResult.clear();
+    	Business b1 = cmbB1.getValue();
+    	Business b2 = cmbB2.getValue();
+    	String soglia = txtX2.getText();
+    	if(b1==null || b2==null || soglia==null) {
+    		txtResult.setText("Selezionare locale di partenza e locale di arrivo!");
+    		return;
+    	}
+    	try {
+    		double so= Double.parseDouble(soglia);
+    		List<Business> ris = this.model.calcolaPercorso(b1, b2, so);
+    		txtResult.setText("Percorso con partenza da "+b1.getBusinessName()+" e arrivo a "+b2.getBusinessName()+": "+this.model.getPesoOttimo()+"\n");
+    		for(Business b: ris)
+    			txtResult.appendText(b.toString()+"\n");
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Inserire un valore numerico come soglia!");
+    		return;
+    	}
+    	
 
     }
 
@@ -80,5 +122,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	cmbCitta.getItems().addAll(this.model.getCitta());
     }
 }
